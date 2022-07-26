@@ -19,7 +19,7 @@ const App = () => {
       .catch((err) => {
         console.log(err);
       })
-    setWord('');
+    setWord('')
   }
 
   console.log(word);
