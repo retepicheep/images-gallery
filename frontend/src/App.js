@@ -1,10 +1,12 @@
 import { useState } from "react";
+import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Header from "./components/Header";
 import Search from "./components/Search";
 import ImageCard from "./components/ImageCard";
 import { Container, Row, Col } from "react-bootstrap";
 import Welcome from "./components/Welcome";
+import React from "react";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://ringil.local:5050";
 
@@ -12,16 +14,16 @@ const App = () => {
   const [word, setWord] = useState("");
   const [images, setImages] = useState([]);
 
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = async (e) => {
     e.preventDefault();
-    fetch(`${API_URL}/new-image?query=${word}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setImages([{ ...data, title: word }, ...images]);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+
+    try {
+      const res = await axios.get(`${API_URL}/new-image?query=${word}`);
+      setImages([{ ...res.data, title: word }, ...images]);
+    } catch (error) {
+      console.log(error);
+    }
+
     setWord("");
   };
 
