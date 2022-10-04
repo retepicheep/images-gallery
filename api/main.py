@@ -1,9 +1,10 @@
 import os
 import requests
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from dotenv import load_dotenv
 from flask_cors import CORS
 from mongo_client import mongo_client
+import logging
 
 gallery = mongo_client.gallery
 images_collection = gallery.images
@@ -19,11 +20,18 @@ if not UNSPLASH_KEY:
         "Please create .env.local file and insert there UNSPLASH_KEY"
     )
 
+logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
+#logging.getLogger('flask_cors').level = logging.DEBUG
 CORS(app)
 
 app.config["DEBUG"] = DEBUG
 
+
+@app.before_request
+def basic_authentication():
+    if request.method.lower() == 'options':
+        return Response()
 
 @app.route("/new-image")
 def new_image():
@@ -37,6 +45,7 @@ def new_image():
 
 @app.route("/images", methods=["GET", "POST"])
 def images():
+    app.logger.info("log image call")
     if request.method == "GET":
         # read images from the database
         imgs = images_collection.find({})
@@ -50,9 +59,11 @@ def images():
         return {"inserted_id": inserted_id}
 
 
-@app.route("/images/<image_id>", methods=["DELETE"])
+@app.route("/image/<image_id>", methods=["DELETE"])
 def image(image_id):
+    app.logger.info("Delete image")
     if request.method == "DELETE":
+        app.logger.info("Delete image")
         # delete image from the database
         result = images_collection.delete_one({"_id": image_id})
         if not result:
@@ -60,7 +71,7 @@ def image(image_id):
         elif result and not result.deleted_count:
             return {"error": "Image not found"}, 404
         else:
-            return {"deleted_id": image_id}
+            return {"deleted_id": image_id}, 202
 
 
 if __name__ == "__main__":
